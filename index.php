@@ -109,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$POSTED = (array) json_decode(file_get_contents("php://input"));
 
+
 	if ($POSTED["debug"] == 1){
 		$RESPONSE['debug']['POST_params'] = $POSTED;
 	}
@@ -237,78 +238,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
 		}
 
-	} elseif ($POSTED['action'] == poll_device){
-		$params = ["hostname"];
-
-		foreach ($params as $param){
-				if ( empty($POSTED[$param])) {  // Handle missing actions as an error
-						$RESPONSE['success']= false;
-						$RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
-						$end = microtimeTicks();         // get the current microtime for performance tracking
-						$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-						exit(json_encode($RESPONSE));
-				}
-		}
-
-		try{
-
-			$hostname = $POSTED["hostname"];
-	//		$poll = exec('../../poller.php -h ' . $hostname);
-			$poll = "test";
-			shell_exec('../../poller.php -h ' . $hostname . ' >> /dev/null &');
-
-	//		if ($POSTED['debug'] == 1){
-	//			$RESPONSE['debug']['api_return'] = $poll;
-	//		}
-			
-	//		if ($poll){
-				$RESPONSE['success'] = true;				
-				$RESPONSE['message'] = $POSTED['action'] . " queued device for polling : " . $hostname;
-
-	//		} else {
-	//			$RESPONSE['success'] = false;				
-	//			$RESPONSE['message'] = $POSTED['action'] . " failed to poll device : " . $hostname;
-	//		}
-			$end = microtimeTicks();         // get the current microtime for performance tracking
-			$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-			exit(json_encode($RESPONSE));                           // terminate and respond with json
-
-		}catch (\Exception $e) {
-				// catch exceptions as BAD data
-				$RESPONSE['success'] = false;
-				$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
-				$end = microtimeTicks();         						// get the current microtime for performance tracking
-				$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-		}
-	} elseif ($POSTED['action'] == poll_all_devices){
-		$params = [];
-
-		foreach ($params as $param){
-				if ( empty($POSTED[$param])) {  // Handle missing actions as an error
-						$RESPONSE['success']= false;
-						$RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
-						$end = microtimeTicks();         // get the current microtime for performance tracking
-						$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-						exit(json_encode($RESPONSE));
-				}
-		}
-
-		try{
-			shell_exec('../../poller.php -h all >> /dev/null &');
-
-			$RESPONSE['success'] = true;				
-			$RESPONSE['message'] = $POSTED['action'] . " queued all devices for polling.";
-			$end = microtimeTicks();         // get the current microtime for performance tracking
-			$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-			exit(json_encode($RESPONSE));                           // terminate and respond with json
-
-		}catch (\Exception $e) {
-				// catch exceptions as BAD data
-				$RESPONSE['success'] = false;
-				$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
-				$end = microtimeTicks();         						// get the current microtime for performance tracking
-				$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-		}
 	} else {
 		$RESPONSE['success']= false;
 		$RESPONSE['message']      = "Unsupported Action!";
