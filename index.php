@@ -1,3 +1,9 @@
+//Custom API to interface to Observium
+//Observium functions used :
+//dbFetchRows
+//set_entity_attrib
+//
+
 <?php
 
 // do not authenticate requests to this call
@@ -21,6 +27,12 @@ function microtimeTicks(){
         $ticks = explode(' ', microtime());
         // Return the sum of the two numbers (double precision number)
         return $ticks[0] + $ticks[1];
+}
+
+function quitApi($RESPONSE){
+	$end = microtimeTicks();         // get the current microtime for performance tracking
+	$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
+	exit(json_encode($RESPONSE));
 }
 
 function get_devices(){
@@ -68,41 +80,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 				$RESPONSE['success'] = true;
 				$RESPONSE['data'] = $device;
 				$RESPONSE['message']      = "Device ID " . $id . " named " . $device[hostname] . " returned!";
-				$end = microtimeTicks();         // get the current microtime for performance tracking
-				$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-				exit(json_encode($RESPONSE));
+				quitApi($RESPONSE);
 			}
 		}
 		$RESPONSE['success'] = false;
 		$RESPONSE['message']      = "Device " . $_GET[hostname] . " not found!";
-		$end = microtimeTicks();         // get the current microtime for performance tracking
-		$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-		exit(json_encode($RESPONSE));
-
+		quitApi($RESPONSE);
 	} elseif ($_GET[id])
 	{
 		if($devices[$_GET[id]]){
 			$RESPONSE['success'] = true;
 			$RESPONSE['data'] = $devices[$_GET[id]];
 			$RESPONSE['message']      = "Device ID " . $devices[$_GET[id]][device_id] . " named " . $devices[$_GET[id]][hostname] . " returned!";
-			$end = microtimeTicks();         // get the current microtime for performance tracking
-			$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-			exit(json_encode($RESPONSE));
-
+			quitApi($RESPONSE);
 		} else {
 			$RESPONSE['success'] = false;
 			$RESPONSE['message']      = "Device ID " . $_GET[id] . " not found!";
-			$end = microtimeTicks();         // get the current microtime for performance tracking
-			$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-			exit(json_encode($RESPONSE));
+			quitApi($RESPONSE);
 		}
 	} else {
 		$RESPONSE['success'] = true;
 		$RESPONSE['data'] = $devices;
 		$RESPONSE['message']      = "All devices returned!";
-		$end = microtimeTicks();         // get the current microtime for performance tracking
-		$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-		exit(json_encode($RESPONSE));
+		quitApi($RESPONSE);
 	}
 
 }
@@ -117,9 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if (empty($POSTED)){
 			$RESPONSE['success']= false;
 			$RESPONSE['message']  = "No POST data found!";
-			$end = microtimeTicks();         // get the current microtime for performance tracking
-			$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-			exit(json_encode($RESPONSE));
+			quitApi($RESPONSE);
 	}
 
 	//Required Parameters
@@ -127,9 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if (empty($POSTED["action"])) {
 		$RESPONSE['success']= false;
 		$RESPONSE['message']      = "Missing or empty parameter ->{action}<-";
-		$end = microtimeTicks();         // get the current microtime for performance tracking
-		$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-		exit(json_encode($RESPONSE));
+		quitApi($RESPONSE);
 	}
 
 	if ($POSTED["action"] == "add_device") {
@@ -139,9 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				if ( empty($POSTED[$param])) {  // Handle missing actions as an error
 						$RESPONSE['success']= false;
 						$RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
-						$end = microtimeTicks();         // get the current microtime for performance tracking
-						$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-						exit(json_encode($RESPONSE));
+						quitApi($RESPONSE);
 				}
 		}
 
@@ -159,7 +153,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			} else {
 				$RESPONSE['success'] = true;
 				$RESPONSE['message'] = $POSTED['action'] . " returned valid device ID: " . $device_id;
-				
+
+				//If device is an ACCESS SWITCH, disable PORTS module.
 				$reg = "/^\D{5}\S{3}.*(sw[api]|SW[API])[0-9]{2,4}.*$/";                   //regex to match ACCESS switches only
 				if (preg_match($reg,$hostname, $hits)){
 					//$RESPONSE[test] = "test!";
@@ -168,17 +163,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				//shell_exec('../../discovery.php -h ' . $POSTED["hostname"] . ' >> /dev/null &');
 			}
 
-			$end = microtimeTicks();         // get the current microtime for performance tracking
-			$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-			exit(json_encode($RESPONSE));                           // terminate and respond with json
-
+			quitApi($RESPONSE);
 		}catch (\Exception $e) {
 				// catch exceptions as BAD data
 				$RESPONSE['success'] = false;
 				$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
-				$end = microtimeTicks();         						// get the current microtime for performance tracking
-				$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-				exit(json_encode($RESPONSE));                           // terminate and respond with json
+				quitApi($RESPONSE);
 		}
 
 
@@ -190,9 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				if ( empty($POSTED[$param])) {  // Handle missing actions as an error
 						$RESPONSE['success']= false;
 						$RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
-						$end = microtimeTicks();         // get the current microtime for performance tracking
-						$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-						exit(json_encode($RESPONSE));
+						quitApi($RESPONSE);
 				}
 		}
 
@@ -206,18 +194,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				if ($POSTED['debug'] == 1){
 					$RESPONSE['debug']['api_return'] = $delete;
 				}
-				
+
 				if ($delete){
-					$RESPONSE['success'] = true;				
+					$RESPONSE['success'] = true;
 					$RESPONSE['message'] = $POSTED['action'] . " successfully deleted device id: " . $device_id;
 
 				} else {
-					$RESPONSE['success'] = false;				
+					$RESPONSE['success'] = false;
 					$RESPONSE['message'] = $POSTED['action'] . " failed to delete device id: " . $device_id;
 				}
-				$end = microtimeTicks();         // get the current microtime for performance tracking
-				$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-				exit(json_encode($RESPONSE));                           // terminate and respond with json
+				quitApi($RESPONSE);
 
 			} else {
 				$RESPONSE['success'] = false;
@@ -225,25 +211,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				if ($POSTED['debug'] == 1){
 					$RESPONSE['debug']['api_return'] = $device_id;
 				}
-				$end = microtimeTicks();         // get the current microtime for performance tracking
-				$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-				exit(json_encode($RESPONSE));                           // terminate and respond with json
+				quitApi($RESPONSE);
 			}
 
 		}catch (\Exception $e) {
-				// catch exceptions as BAD data
-				$RESPONSE['success'] = false;
-				$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
-				$end = microtimeTicks();         						// get the current microtime for performance tracking
-				$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
+			// catch exceptions as BAD data
+			$RESPONSE['success'] = false;
+			$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
+			quitApi($RESPONSE);
 		}
 
 	} else {
 		$RESPONSE['success']= false;
 		$RESPONSE['message']      = "Unsupported Action!";
-		$end = microtimeTicks();         // get the current microtime for performance tracking
-		$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-		exit(json_encode($RESPONSE));
+		quitApi($RESPONSE);
 	}
 }
 
