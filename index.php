@@ -159,6 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				if (preg_match($reg,$hostname, $hits)){
 					//$RESPONSE[test] = "test!";
 					set_entity_attrib("device", $device_id, "discover_ports", 0);
+					set_entity_attrib("device", $device_id, "poll_ports", 0);
+
 				}
 				//shell_exec('../../discovery.php -h ' . $POSTED["hostname"] . ' >> /dev/null &');
 			}
