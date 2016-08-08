@@ -1,10 +1,10 @@
+<?php
 //Custom API to interface to Observium
 //Observium functions used :
 //dbFetchRows
 //set_entity_attrib
 //
 
-<?php
 
 // do not authenticate requests to this call
 //define("NO_AUTHENTICATION",1);
@@ -30,22 +30,27 @@ function microtimeTicks(){
 }
 
 function quitApi($RESPONSE){
+	global $start;
 	$end = microtimeTicks();         // get the current microtime for performance tracking
 	$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
 	exit(json_encode($RESPONSE));
 }
 
 function get_devices(){
-	$query = "SELECT * FROM `devices` ";
-//	$query .= $where . $query_permitted . $sort;
-	$results = dbFetchRows($query);
-	foreach ($results as $key => $device){
-		$array[$device[device_id]] = $device;
-	}
-	ksort($array);
-	//$object = (object) $array;
+        $query = "SELECT * FROM `devices` ";
+        $results = dbFetchRows($query);
 
+        foreach ($results as $key => $device){
+                $array[$device[device_id]] = $device;
+        }
+        ksort($array);
 	return $array;
+}
+
+function get_device($deviceid){
+	$query = "SELECT * FROM `devices` WHERE device_id = " . $deviceid;
+	$results = dbFetchRows($query);
+	return $results;
 }
 
 $start = microtimeTicks();       // get the current microtime for performance tracking
@@ -141,8 +146,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		try{
 			$hostname = $POSTED["hostname"];
+			ob_start();
 			$device_id = add_device($hostname);
-
+			ob_end_clean();
 			if ($POSTED['debug'] == 1){
 				$RESPONSE['debug']['api_return'] = $device_id;
 			}
@@ -152,16 +158,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$RESPONSE['message'] = $POSTED['action'] . " failed to return valid device ID.";
 			} else {
 				$RESPONSE['success'] = true;
+				$device = get_device($device_id);
+				$RESPONSE['data']= $device[0];
+//				$RESPONSE['data']['device_id'] = $device_id;
+
 				$RESPONSE['message'] = $POSTED['action'] . " returned valid device ID: " . $device_id;
 
 				//If device is an ACCESS SWITCH, disable PORTS module.
-				$reg = "/^\D{5}\S{3}.*(sw[api]|SW[API])[0-9]{2,4}.*$/";                   //regex to match ACCESS switches only
-				if (preg_match($reg,$hostname, $hits)){
-					//$RESPONSE[test] = "test!";
-					set_entity_attrib("device", $device_id, "discover_ports", 0);
-					set_entity_attrib("device", $device_id, "poll_ports", 0);
-
-				}
+//				$reg = "/^\D{5}\S{3}.*(sw[api]|SW[API])[0-9]{2,4}.*$/";                   //regex to match ACCESS switches only
+//				if (preg_match($reg,$hostname, $hits)){
+//					//$RESPONSE[test] = "test!";
+//					set_entity_attrib("device", $device_id, "discover_ports", 0);
+//					set_entity_attrib("device", $device_id, "poll_ports", 0);
+//
+//				}
 				//shell_exec('../../discovery.php -h ' . $POSTED["hostname"] . ' >> /dev/null &');
 			}
 
@@ -176,52 +186,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 	} elseif ($POSTED["action"] == "delete_device") {
-		$params = ["hostname"];
 
-		foreach ($params as $param){
-				if ( empty($POSTED[$param])) {  // Handle missing actions as an error
-						$RESPONSE['success']= false;
-						$RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
-						quitApi($RESPONSE);
-				}
+		if ($POSTED['id']) {
+			$device_id = $POSTED['id'];
+		} elseif ($POSTED['hostname']) {
+			$device_id = get_device_id_by_hostname($POSTED['hostname']);
+		} else {
+			$RESPONSE['success'] = false;
+                        $RESPONSE['message'] = "Failed to delete device due to missing ID or HOSTNAME";
+			quitApi($RESPONSE);
 		}
-
-		try{
-
-			$device_id = get_device_id_by_hostname($POSTED["hostname"]);
-
-			if ($device_id){
+		if ($device_id){
+			try{
+				//$device_id = get_device_id_by_hostname($POSTED["hostname"]);
 				$delete = delete_device($device_id, true);
 
-				if ($POSTED['debug'] == 1){
-					$RESPONSE['debug']['api_return'] = $delete;
-				}
-
 				if ($delete){
-					$RESPONSE['success'] = true;
-					$RESPONSE['message'] = $POSTED['action'] . " successfully deleted device id: " . $device_id;
+					if ($POSTED['debug'] == 1){
+						$RESPONSE['debug']['api_return'] = $delete;
+					}
+                                        $RESPONSE['data']['device_id'] = $device_id;
 
+					if (preg_match("\* Deleted device:", $delete, $hits)){
+						$RESPONSE['success'] = true;
+                                                $RESPONSE['message'] = $POSTED['action'] . " successfully deleted device id: " . $device_id;
+					} elseif ($delete == "\nError finding host in the database."){
+						$RESPONSE['success'] = false;
+						$RESPONSE['message'] = $POSTED['action'] . " failed to find device id: " . $device_id;
+					} else {
+	                                        $RESPONSE['success'] = false;
+        	                                $RESPONSE['message'] = $POSTED['action'] . " failed to delete device id: " . $device_id;
+					}
 				} else {
 					$RESPONSE['success'] = false;
 					$RESPONSE['message'] = $POSTED['action'] . " failed to delete device id: " . $device_id;
+					$RESPONSE['data']['device_id'] = $device_id;
 				}
 				quitApi($RESPONSE);
-
-			} else {
-				$RESPONSE['success'] = false;
-				$RESPONSE['message'] = $POSTED['action'] . " returned no valid device ID.";
-				if ($POSTED['debug'] == 1){
-					$RESPONSE['debug']['api_return'] = $device_id;
-				}
-				quitApi($RESPONSE);
-			}
-
-		}catch (\Exception $e) {
-			// catch exceptions as BAD data
+			}catch (\Exception $e) {
+                                // catch exceptions as BAD data
+                                $RESPONSE['success'] = false;
+                                $RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
+				$RESPONSE['data']['device_id'] = $device_id;
+                                quitApi($RESPONSE);
+                        }
+		} else {
 			$RESPONSE['success'] = false;
-			$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
+			$RESPONSE['message'] = $POSTED['action'] . " returned no valid device ID.";
+			if ($POSTED['debug'] == 1){
+				$RESPONSE['debug']['api_return'] = $device_id;
+			}
 			quitApi($RESPONSE);
 		}
+
+	} elseif ($POSTED["action"] == "modify_device") {
+                $params = ["id","option"];
+		$subparams = ["disable_port_discovery","disable_port_polling"];
+
+                foreach ($params as $param){
+			if ( empty($POSTED[$param])) {  // Handle missing actions as an error
+				$RESPONSE['success']= false;
+				$RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
+				quitApi($RESPONSE);
+			}
+                }
+		try{
+			switch ($POSTED['option']) {
+				case "disable_port_discovery":
+					set_entity_attrib("device", $POSTED['id'], "discover_ports", 0);
+					$RESPONSE['success'] = true;
+					$RESPONSE['message'] = $POSTED['action'] . " successfully modified " . $POSTED['option'] . " on device id: " . $POSTED['id'];
+					quitApi($RESPONSE);
+				break;
+				case "disable_port_polling":
+					set_entity_attrib("device", $POSTED['id'], "poll_ports", 0);
+	                                $RESPONSE['success'] = true;
+					$RESPONSE['message'] = $POSTED['action'] . " successfully modified " . $POSTED['option'] . " on device id: " . $POSTED['id'];
+	                                quitApi($RESPONSE);
+				break;
+				default:
+					$RESPONSE['success']= false;
+	        	                $RESPONSE['message']      = "Invalid option ->{$POSTED['option']}<-";
+	                	        quitApi($RESPONSE);
+				break;
+			}
+                }catch (\Exception $e) {
+                        // catch exceptions as BAD data
+                        $RESPONSE['success'] = false;
+                        $RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
+                        quitApi($RESPONSE);
+                }
 
 	} else {
 		$RESPONSE['success']= false;
