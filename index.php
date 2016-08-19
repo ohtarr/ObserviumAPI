@@ -190,13 +190,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 			if ($device_id == false){
 				$RESPONSE['success'] = false;
-				$RESPONSE['message'] = $POSTED['action'] . " failed to return valid device ID.";
+				$RESPONSE['message'] = $POSTED['action'] . " failed for device " . $POSTED['hostname'] . ", no valid device ID returned.";
 			} else {
 				$RESPONSE['success'] = true;
 				$device = get_device($device_id);
 				$RESPONSE['data']= $device[0];
 
-				$RESPONSE['message'] = $POSTED['action'] . " returned valid device ID: " . $device_id;
+				$RESPONSE['message'] = $POSTED['action'] . " returned valid device ID: " . $device_id . " for device " . $POSTED['hostname'] . ".";
 
 			}
 
