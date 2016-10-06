@@ -84,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {             // Handle non-post reque
     exit(json_encode($RESPONSE));
 }
 /**/
+//quitApi($_SERVER);
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 	if($_GET['type'] == "device"){
 		$devices = get_devices();
@@ -224,7 +225,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if ($device_id){
 			try{
 				//$device_id = get_device_id_by_hostname($POSTED["hostname"]);
-				$delete = delete_device($device_id, true);
+				//$delete = delete_device($device_id, true);
+				$delete = delete_device($device_id);
 
 				if ($delete){
 					if ($POSTED['debug']=1){
