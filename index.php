@@ -24,26 +24,26 @@ include("/opt/observium/includes/sql-config.inc.php");
 include_once("/opt/observium/html/includes/functions.inc.php");
 
 function microtimeTicks(){
-        $ticks = explode(' ', microtime());
-        // Return the sum of the two numbers (double precision number)
-        return $ticks[0] + $ticks[1];
+		$ticks = explode(' ', microtime());
+		// Return the sum of the two numbers (double precision number)
+		return $ticks[0] + $ticks[1];
 }
 
 function quitApi($RESPONSE){
 	global $start;
-	$end = microtimeTicks();         // get the current microtime for performance tracking
-	$RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
+	$end = microtimeTicks();		 // get the current microtime for performance tracking
+	$RESPONSE['time'] = $end - $start;					  // calculate the total time we executed
 	exit(json_encode($RESPONSE));
 }
 
 function get_devices(){
-        $query = "SELECT * FROM `devices` ";
-        $results = dbFetchRows($query);
+		$query = "SELECT * FROM `devices` ";
+		$results = dbFetchRows($query);
 
-        foreach ($results as $key => $device){
-                $array[$device[device_id]] = $device;
-        }
-        ksort($array);
+		foreach ($results as $key => $device){
+				$array[$device[device_id]] = $device;
+		}
+		ksort($array);
 	return $array;
 }
 
@@ -62,13 +62,13 @@ function get_groups(){
 	return $array;
 }
 
-$start = microtimeTicks();       // get the current microtime for performance tracking
+$start = microtimeTicks();	   // get the current microtime for performance tracking
 
 /*
-if( !isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != 'on')    {
-        header("HTTP/1.1 301 Moved Permanently");                       // Enforce HTTPS for all traffic
-        header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
-        exit(); 
+if( !isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != 'on')	{
+		header("HTTP/1.1 301 Moved Permanently");					   // Enforce HTTPS for all traffic
+		header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+		exit(); 
 }
 
 /**/
@@ -76,12 +76,12 @@ if( !isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != 'on')    {
 $RESPONSE = [];
 
 /*
-if ($_SERVER['REQUEST_METHOD'] != 'POST') {             // Handle non-post requests as an error
-    $RESPONSE['success']= false;
-    $RESPONSE['message']  = "Request method not supported";
-        $end = microtimeTicks();         // get the current microtime for performance tracking
-        $RESPONSE['time'] = $end - $start;                      // calculate the total time we executed
-    exit(json_encode($RESPONSE));
+if ($_SERVER['REQUEST_METHOD'] != 'POST') {			 // Handle non-post requests as an error
+	$RESPONSE['success']= false;
+	$RESPONSE['message']  = "Request method not supported";
+		$end = microtimeTicks();		 // get the current microtime for performance tracking
+		$RESPONSE['time'] = $end - $start;					  // calculate the total time we executed
+	exit(json_encode($RESPONSE));
 }
 /**/
 //quitApi($_SERVER);
@@ -92,51 +92,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 		{
 			foreach($devices as $id => $device){
 				if ($_GET['hostname'] == $device['hostname']){
-
 					$RESPONSE['success'] = true;
 					$RESPONSE['data'] = $device;
-					$RESPONSE['message']      = "Device ID " . $id . " named " . $device[hostname] . " returned!";
+					$RESPONSE['message']	  = "Device ID " . $id . " named " . $device[hostname] . " returned!";
 					quitApi($RESPONSE);
 				}
 			}
 			$RESPONSE['success'] = false;
-			$RESPONSE['message']      = "Device " . $_GET[hostname] . " not found!";
+			$RESPONSE['message']	  = "Device " . $_GET[hostname] . " not found!";
 			quitApi($RESPONSE);
 		} elseif ($_GET['id'])
 		{
 			if($devices[$_GET['id']]){
 				$RESPONSE['success'] = true;
 				$RESPONSE['data'] = $devices[$_GET['id']];
-				$RESPONSE['message']      = "Device ID " . $devices[$_GET['id']]['device_id'] . " named " . $devices[$_GET['id']]['hostname'] . " returned!";
+				$RESPONSE['message']	  = "Device ID " . $devices[$_GET['id']]['device_id'] . " named " . $devices[$_GET['id']]['hostname'] . " returned!";
 				quitApi($RESPONSE);
 			} else {
 				$RESPONSE['success'] = false;
-				$RESPONSE['message']      = "Device ID " . $_GET['id'] . " not found!";
+				$RESPONSE['message']	  = "Device ID " . $_GET['id'] . " not found!";
 				quitApi($RESPONSE);
 			}
 		} else {
 			$RESPONSE['success'] = true;
 			$RESPONSE['data'] = $devices;
-			$RESPONSE['message']      = "All " . count($devices) . " devices returned!";
+			$RESPONSE['message']	  = "All " . count($devices) . " devices returned!";
 			quitApi($RESPONSE);
 		}
 	} elseif($_GET['type'] == "group"){
 
 		$agroups = get_groups();
 //		$agroups = dbFetchRows("SELECT * FROM `groups` ORDER BY `group_name`");
-                $RESPONSE['success']	= true;
+				$RESPONSE['success']	= true;
 		$RESPONSE['data']	= $agroups;
-                $RESPONSE['message']	= "All " . count($agroups) . " groups returned!";
-                quitApi($RESPONSE);
+				$RESPONSE['message']	= "All " . count($agroups) . " groups returned!";
+				quitApi($RESPONSE);
 	} else {
 		$RESPONSE['success'] = false;
-                $RESPONSE['message']      = "Invalid type -> {$_GET['type']} <- requested!";
-                quitApi($RESPONSE);
+				$RESPONSE['message']	  = "Invalid type -> {$_GET['type']} <- requested!";
+				quitApi($RESPONSE);
 	}
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-	$POSTED = (array) json_decode(file_get_contents("php://input"));
-
+	$POSTED = json_decode(file_get_contents("php://input"), true);
+	$RESPONSE['POSTED'] = $POSTED;
 
 	if ($POSTED["debug"] == 1){
 		$RESPONSE['debug']['post_params'] = $POSTED;
@@ -152,16 +151,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	if (empty($POSTED["action"])) {
 		$RESPONSE['success']= false;
-		$RESPONSE['message']      = "Missing or empty parameter ->{action}<-";
+		$RESPONSE['message']	  = "Missing or empty parameter ->{action}<-";
 		quitApi($RESPONSE);
 	}
 
 	if ($POSTED["action"] == "add_device") {
 		$params = ["hostname"];
 		foreach ($params as $param){
-				if ( empty($POSTED[$param])) {  // Handle missing actions as an error
+				if ( !isset($POSTED[$param])) {  // Handle missing actions as an error
 						$RESPONSE['success']= false;
-						$RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
+						$RESPONSE['message']	  = "Missing or empty parameter ->{$param}<-";
 						quitApi($RESPONSE);
 				}
 		}
@@ -174,9 +173,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if($POSTED['debug']=1){
 				$RESPONSE['debug']['obs_raw']=get_device_id_by_hostname($POSTED['hostname']);
 			}
-                        $RESPONSE['success'] = false;
-                        $RESPONSE['message'] = "Hostname {$POSTED['hostname']} already exists!";
-                        quitApi($RESPONSE);
+						$RESPONSE['success'] = false;
+						$RESPONSE['message'] = "Hostname {$POSTED['hostname']} already exists!";
+						quitApi($RESPONSE);
 		}
 
 
@@ -200,7 +199,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$RESPONSE['message'] = $POSTED['action'] . " returned valid device ID: " . $device_id . " for device " . $POSTED['hostname'] . ".";
 
 			}
-
 			quitApi($RESPONSE);
 		}catch (\Exception $e) {
 				// catch exceptions as BAD data
@@ -208,8 +206,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
 				quitApi($RESPONSE);
 		}
-
-
 
 	} elseif ($POSTED["action"] == "delete_device") {
 
@@ -219,7 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$device_id = get_device_id_by_hostname($POSTED['hostname']);
 		} else {
 			$RESPONSE['success'] = false;
-                        $RESPONSE['message'] = "Failed to delete device due to missing ID or HOSTNAME";
+						$RESPONSE['message'] = "Failed to delete device due to missing ID or HOSTNAME";
 			quitApi($RESPONSE);
 		}
 		if ($device_id){
@@ -232,17 +228,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					if ($POSTED['debug']=1){
 						$RESPONSE['debug']['obs_raw'] = $delete;
 					}
-                                        $RESPONSE['data']['device_id'] = $device_id;
+										$RESPONSE['data']['device_id'] = $device_id;
 
 					if (preg_match("/\* Deleted device:/", $delete, $hits)){
 						$RESPONSE['success'] = true;
-                                                $RESPONSE['message'] = $POSTED['action'] . " successfully deleted device id: " . $device_id;
+												$RESPONSE['message'] = $POSTED['action'] . " successfully deleted device id: " . $device_id;
 					} elseif ($delete == "\nError finding host in the database."){
 						$RESPONSE['success'] = false;
 						$RESPONSE['message'] = $POSTED['action'] . " failed to find device id: " . $device_id;
 					} else {
-	                                        $RESPONSE['success'] = false;
-        	                                $RESPONSE['message'] = $POSTED['action'] . " failed to delete device id: " . $device_id;
+											$RESPONSE['success'] = false;
+											$RESPONSE['message'] = $POSTED['action'] . " failed to delete device id: " . $device_id;
 					}
 				} else {
 					$RESPONSE['success'] = false;
@@ -251,12 +247,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				}
 				quitApi($RESPONSE);
 			}catch (\Exception $e) {
-                                // catch exceptions as BAD data
-                                $RESPONSE['success'] = false;
-                                $RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
+				// catch exceptions as BAD data
+				$RESPONSE['success'] = false;
+				$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
 				$RESPONSE['data']['device_id'] = $device_id;
-                                quitApi($RESPONSE);
-                        }
+				quitApi($RESPONSE);
+			}
 		} else {
 			$RESPONSE['success'] = false;
 			$RESPONSE['message'] = $POSTED['action'] . " returned no valid device ID.";
@@ -267,16 +263,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		}
 
 	} elseif ($POSTED["action"] == "modify_device") {
-                $params = ["id","option"];
+		$params = ["id","option"];
 		$subparams = ["disable_port_discovery","disable_port_polling"];
 
-                foreach ($params as $param){
-			if ( empty($POSTED[$param])) {  // Handle missing actions as an error
+		foreach ($params as $param){
+			if ( !isset($POSTED[$param])) {  // Handle missing actions as an error
 				$RESPONSE['success']= false;
-				$RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
+				$RESPONSE['message']	  = "Missing or empty parameter ->{$param}<-";
 				quitApi($RESPONSE);
 			}
-                }
+		}
 		try{
 			switch ($POSTED['option']) {
 				case "disable_port_discovery":
@@ -287,39 +283,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				break;
 				case "disable_port_polling":
 					set_entity_attrib("device", $POSTED['id'], "poll_ports", 0);
-	                                $RESPONSE['success'] = true;
+					$RESPONSE['success'] = true;
 					$RESPONSE['message'] = $POSTED['action'] . " successfully modified " . $POSTED['option'] . " on device id: " . $POSTED['id'];
-	                                quitApi($RESPONSE);
+					quitApi($RESPONSE);
 				break;
 				default:
 					$RESPONSE['success']= false;
-	        	                $RESPONSE['message']      = "Invalid option ->{$POSTED['option']}<-";
-	                	        quitApi($RESPONSE);
+					$RESPONSE['message']	  = "Invalid option ->{$POSTED['option']}<-";
+					quitApi($RESPONSE);
 				break;
 			}
-                }catch (\Exception $e) {
-                        // catch exceptions as BAD data
-                        $RESPONSE['success'] = false;
-                        $RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
-                        quitApi($RESPONSE);
-                }
-        } elseif ($POSTED["action"] == "add_group") {
+		}catch (\Exception $e) {
+				// catch exceptions as BAD data
+				$RESPONSE['success'] = false;
+				$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
+				quitApi($RESPONSE);
+		}
+	} elseif ($POSTED["action"] == "set_entity_attrib") {
+		$params = ["type","id","option", "value"];
+
+		foreach ($params as $param){
+			if ( !isset($POSTED[$param])) {  // Handle missing actions as an error
+				$RESPONSE['success']= false;
+				$RESPONSE['message']	  = "Missing or empty parameter ->{$param}<-";
+				quitApi($RESPONSE);
+			}
+		}
+		try{
+			set_entity_attrib($POSTED['type'], $POSTED['id'], $POSTED['option'], $POSTED['value']);
+			$RESPONSE['success'] = true;
+			$RESPONSE['message'] = $POSTED['action'] . " successfully modified " . $POSTED['option'] . " on device id: " . $POSTED['id'];
+			quitApi($RESPONSE);
+		}catch (\Exception $e) {
+			// catch exceptions as BAD data
+			$RESPONSE['success'] = false;
+			$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
+			quitApi($RESPONSE);
+		}
+	} elseif ($POSTED["action"] == "add_group") {
 		$params = ["group_type", "name", "description", "device_association", "entity_association"];
 
-                foreach ($params as $param){
-                        if ( empty($POSTED[$param])) {  // Handle missing actions as an error
-                                $RESPONSE['success']= false;
-                                $RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
-                                quitApi($RESPONSE);
-                        }
-                }
+		foreach ($params as $param){
+			if ( !isset($POSTED[$param])) {  // Handle missing actions as an error
+				$RESPONSE['success']= false;
+				$RESPONSE['message']	  = "Missing or empty parameter ->{$param}<-";
+				quitApi($RESPONSE);
+			}
+		}
 		$vars = array(
-				'entity_type'			=>	$POSTED['group_type'],
-				'group_name'			=>	$POSTED['name'],
-				'group_descr'			=>	$POSTED['description'],
-				'assoc_device_conditions'	=>	$POSTED['device_association'],
-				'assoc_entity_conditions'	=>	$POSTED['entity_association'],
-			);
+			'entity_type'			=>	$POSTED['group_type'],
+			'group_name'			=>	$POSTED['name'],
+			'group_descr'			=>	$POSTED['description'],
+			'assoc_device_conditions'	=>	$POSTED['device_association'],
+			'assoc_entity_conditions'	=>	$POSTED['entity_association'],
+		);
 
 		$ok = TRUE;
 		foreach (array('entity_type', 'group_name', 'group_descr', 'assoc_device_conditions', 'assoc_entity_conditions') as $var)
@@ -341,8 +358,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					$dev_conds = array();
 					foreach (explode("\n", $vars['assoc_device_conditions']) AS $cond)
 					{
-					  list($this['attrib'], $this['condition'], $this['value']) = explode(" ", trim($cond), 3);
-					  $dev_conds[] = $this;
+						list($this['attrib'], $this['condition'], $this['value']) = explode(" ", trim($cond), 3);
+						$dev_conds[] = $this;
 					}
 
 					if ($vars['assoc_device_conditions'] == "*") { $vars['assoc_device_conditions'] = json_encode(array()); }
@@ -350,40 +367,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					$ent_conds = array();
 					foreach (explode("\n", $vars['assoc_entity_conditions']) AS $cond)
 					{
-					  list($this['attrib'], $this['condition'], $this['value']) = explode(" ", trim($cond), 3);
-					  $ent_conds[] = $this;
+						list($this['attrib'], $this['condition'], $this['value']) = explode(" ", trim($cond), 3);
+						$ent_conds[] = $this;
 					}
 
 					if ($vars['assoc_entity_conditions'] == "*") { $vars['assoc_entity_conditions'] = json_encode(array()); }
 
 					$assoc_array = array(
-								'group_id'			=>	$vars['group_id'],
-								'entity_type'		=>	$vars['entity_type'],
-								'device_attribs'	=>	json_encode($dev_conds),
-								'entity_attribs'	=>	json_encode($ent_conds),
-						);
+						'group_id'			=>	$vars['group_id'],
+						'entity_type'		=>	$vars['entity_type'],
+						'device_attribs'	=>	json_encode($dev_conds),
+						'entity_attribs'	=>	json_encode($ent_conds),
+					);
 
 					$vars['assoc_id'] = dbInsert('groups_assoc', $assoc_array);
 
 
 					if (is_numeric($vars['assoc_id']))
 					{
+/* TEMP REMOVE THIS, it is LOCKING up!
 						foreach (dbFetchRows("SELECT * FROM `devices`") as $udevice)
 						{
 							ob_start();
 							update_device_group_table($udevice);
 							ob_end_clean();
 						}
+/**/
 						$RESPONSE['success'] = true;
-        	                                $RESPONSE['data']['group_id'] = $vars['group_id'];
-	                                        $RESPONSE['data']['assoc_id'] = $vars['assoc_id'];
+						$RESPONSE['data']['group_id'] = $vars['group_id'];
+						$RESPONSE['data']['assoc_id'] = $vars['assoc_id'];
 						$RESPONSE['message'] = "Group " . $vars['group_name'] . " with ID " . $vars['group_id'] . " created with assoc ID " . $vars['assoc_id'];
 						quitApi($RESPONSE);
 					} else {
-                                                $RESPONSE['success'] = false;
-                                                $RESPONSE['data']['group_id'] = $vars['group_id'];
-                                                $RESPONSE['message'] = "Group " . $vars['group_name'] . " with ID " . $vars['group_id'] . " failed to associate, group deleted.";
-                                                quitApi($RESPONSE);
+						$RESPONSE['success'] = false;
+						$RESPONSE['data']['group_id'] = $vars['group_id'];
+						$RESPONSE['message'] = "Group " . $vars['group_name'] . " with ID " . $vars['group_id'] . " failed to associate, group deleted.";
+						quitApi($RESPONSE);
 						dbDelete('groups', "`group_id` = ?", array($vars['group_id'])); // Undo group create
 					}
 				} else {
@@ -391,23 +410,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					$RESPONSE['message'] = "Failed to create device group for unknown reasons!";
 					quitApi($RESPONSE);
 				}
-        	        }catch (\Exception $e) {
-                	        // catch exceptions as BAD data
-	                        $RESPONSE['success'] = false;
-	                        $RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
-	                        quitApi($RESPONSE);
-	                }
+			}catch (\Exception $e) {
+				// catch exceptions as BAD data
+				$RESPONSE['success'] = false;
+				$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
+				quitApi($RESPONSE);
+			}
 		}
-        } elseif ($POSTED["action"] == "delete_group") {
-                $params = ["name"];
+	} elseif ($POSTED["action"] == "delete_group") {
+		$params = ["name"];
 
-                foreach ($params as $param){
-                        if ( empty($POSTED[$param])) {  // Handle missing actions as an error
-                                $RESPONSE['success']= false;
-                                $RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
-                                quitApi($RESPONSE);
-                        }
-                }
+		foreach ($params as $param){
+			if ( !isset($POSTED[$param])) {  // Handle missing actions as an error
+				$RESPONSE['success']= false;
+				$RESPONSE['message']	  = "Missing or empty parameter ->{$param}<-";
+				quitApi($RESPONSE);
+			}
+		}
 		//$RESPONSE['data'] = dbFetchRows("SELECT * FROM `groups`");
 		//quitApi($RESPONSE);
 		foreach (dbFetchRows("SELECT * FROM `groups`") as $ugroup)
@@ -420,19 +439,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		}
 		if ($group_id){
 
-			dbDelete('groups',       '`group_id` = ?', array($group_id));
+			dbDelete('groups',	   '`group_id` = ?', array($group_id));
 			dbDelete('group_table',  '`group_id` = ?', array($group_id));
 			dbDelete('groups_assoc', '`group_id` = ?', array($group_id));
 
 			$groupexists = dbFetchRows("SELECT * FROM `groups` WHERE `group_id` = " . $group_id);
 
 			if (!$groupexists){
-	                        $RESPONSE['success'] = true;
-        	                $RESPONSE['message'] = "Group -> " . $POSTED['name'] . " <- was successfully deleted!";
+				$RESPONSE['success'] = true;
+				$RESPONSE['message'] = "Group -> " . $POSTED['name'] . " <- was successfully deleted!";
 				quitApi($RESPONSE);
 			} else {
-                	        $RESPONSE['success'] = false;
-                        	$RESPONSE['message'] = "Group -> " . $POSTED['name'] . " <- failed to delete!";
+				$RESPONSE['success'] = false;
+				$RESPONSE['message'] = "Group -> " . $POSTED['name'] . " <- failed to delete!";
 				$RESPONSE['data'] = $groupexists;
 				quitApi($RESPONSE);
 			}
@@ -443,9 +462,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		}
 	} else {
 		$RESPONSE['success']= false;
-		$RESPONSE['message']      = "Unsupported Action!";
+		$RESPONSE['message']	  = "Unsupported Action!";
 		quitApi($RESPONSE);
 	}
 }
 
-//exit(json_encode($RESPONSE));                           // terminate and respond with json
+//exit(json_encode($RESPONSE));						   // terminate and respond with json
