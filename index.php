@@ -6,6 +6,23 @@
 //
 
 
+// Get provided credentials
+if(!isset($_SERVER['PHP_AUTH_USER'])) { $user = ''; }else{ $user = $_SERVER['PHP_AUTH_USER']; }
+if(!isset($_SERVER['PHP_AUTH_PW'  ])) { $pass = ''; }else{ $pass = $_SERVER['PHP_AUTH_PW'  ]; }
+
+require_once "creds.php";
+
+// check if they are a valid user
+$valid = (in_array($user, array_keys($users))) && (md5($pass) == $users[$user]["hash"]);
+
+// if credentials are NOT valid, reject the user and prompt for http basic auth
+if (!$valid) {
+    header('WWW-Authenticate: Basic realm="Agar"');
+    header('HTTP/1.0 401 Unauthorized');
+    die ("Authentication failed");
+}
+
+
 // do not authenticate requests to this call
 //define("NO_AUTHENTICATION",1);
 // always allow access from everywhere
@@ -262,6 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			quitApi($RESPONSE);
 		}
 
+/*
 	} elseif ($POSTED["action"] == "modify_device") {
 		$params = ["id","option"];
 		$subparams = ["disable_port_discovery","disable_port_polling"];
@@ -299,6 +317,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$RESPONSE['message'] = "Caught exception {$e->getMessage()}\n";
 				quitApi($RESPONSE);
 		}
+
+/**/
 	} elseif ($POSTED["action"] == "set_entity_attrib") {
 		$params = ["type","id","option", "value"];
 
