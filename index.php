@@ -79,6 +79,17 @@ function get_groups(){
 	return $array;
 }
 
+function get_ports(){
+                $query = "SELECT * FROM `ports` ";
+                $results = dbFetchRows($query);
+
+                foreach ($results as $key => $port){
+                                $array[$port[device_id]]['port_id'] = $port;
+                }
+                ksort($array);
+        return $array;
+}
+
 $start = microtimeTicks();	   // get the current microtime for performance tracking
 
 /*
@@ -136,6 +147,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 			$RESPONSE['message']	  = "All " . count($devices) . " devices returned!";
 			quitApi($RESPONSE);
 		}
+	} elseif($_GET['type'] == "ports"){
+                $ports = get_ports();
+		$RESPONSE['success'] = true;
+		$RESPONSE['data'] = $ports;
+		$RESPONSE['message']      = "All " . count($ports) . " ports returned!";
+		quitApi($RESPONSE);
 	} elseif($_GET['type'] == "group"){
 
 		$agroups = get_groups();
@@ -531,7 +548,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$RESPONSE['data'] = dbFetchRows("SELECT * FROM " . $POSTED['table'] . " WHERE " . $POSTED['key'] . " LIKE ?", array($POSTED['id']));
 			quitApi($RESPONSE);
 		}
-		
+/*
+        } elseif ($POSTED["action"] == "dbdelete") {
+                $params = ["table","key","id"];
+
+                foreach ($params as $param){
+                        if ( !isset($POSTED[$param])) {  // Handle missing actions as an error
+                                $RESPONSE['success']= false;
+                                $RESPONSE['message']      = "Missing or empty parameter ->{$param}<-";
+                                quitApi($RESPONSE);
+                        }
+                }
+
+                if (is_array($POSTED['params']))
+                {
+                        $result = dbDelete($POSTED['table'], $POSTED['key'] . " =  ?", array($POSTED['id']));
+                }
+                if ($result){
+                        $RESPONSE['success'] = true;
+                        $RESPONSE['message'] = "dbupdate was successful!";
+                        $RESPONSE['data'] = dbFetchRows("SELECT * FROM " . $POSTED['table'] . " WHERE " . $POSTED['key'] . " LIKE ?", array($POSTED['id']));
+                        quitApi($RESPONSE);
+                } else {
+                        $RESPONSE['success'] = false;
+                        $RESPONSE['message'] = "dbupdate was NOT successful!";
+                        $RESPONSE['data'] = dbFetchRows("SELECT * FROM " . $POSTED['table'] . " WHERE " . $POSTED['key'] . " LIKE ?", array($POSTED['id']));
+                        quitApi($RESPONSE);
+                }
+/**/
 	} else {
 		$RESPONSE['success']= false;
 		$RESPONSE['message']	  = "Unsupported Action!";
